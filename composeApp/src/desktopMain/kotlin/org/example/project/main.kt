@@ -8,6 +8,6 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "Notepad_kotlin",
     ) {
-        App()
+        RichMarkdownEditor()
     }
 }

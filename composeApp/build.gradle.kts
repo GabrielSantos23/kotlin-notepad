@@ -7,10 +7,7 @@ plugins {
     alias(libs.plugins.composeHotReload)
 }
 
-repositories {
-    google()
-    mavenCentral()
-}
+
 
 kotlin {
     jvmToolchain(11) // Set JVM target to 11
@@ -29,6 +26,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.richeditor)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -37,7 +35,9 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(compose.materialIconsExtended)
+            implementation(libs.richeditor)
         }
+
     }
 }
 
