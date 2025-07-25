@@ -1,181 +1,206 @@
-package org.example.project
-
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
-import com.mohamedrejeb.richeditor.model.rememberRichTextState
-import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
-import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.unit.sp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RichMarkdownEditor() {
-    val state = rememberRichTextState()
-    var showHtmlDialog by remember { mutableStateOf(false) }
-    var showMarkdownDialog by remember { mutableStateOf(false) }
-    var showFileMenu by remember { mutableStateOf(false) }
-    var showEditMenu by remember { mutableStateOf(false) }
-    var showViewMenu by remember { mutableStateOf(false) }
-    var showLinkDialog by remember { mutableStateOf(false) }
+@Preview
+fun NotesUI(sidebarVisible: MutableState<Boolean> = remember { mutableStateOf(true) }) {
+    val notes = (1..8).map { "My notes $it" }
+    val selectedNote = remember { mutableStateOf("My notes 1") }
 
-    LaunchedEffect(Unit) {
-        state.setMarkdown("# Olá!\n\n**Escreva** algo *markdown* aqui.")
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
+    MaterialTheme(colors = darkColors()) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .fillMaxSize()
+                .background(Color(0xFF1E1E1E))
         ) {
-            // 🧩 Esquerda: menus
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                DropdownButton("File", showFileMenu, onToggle = { showFileMenu = !showFileMenu }) {
-                    DropdownMenuItem(onClick = { showFileMenu = false }) { Text("Novo") }
-                    DropdownMenuItem(onClick = { showFileMenu = false }) { Text("Abrir") }
-                    DropdownMenuItem(onClick = { showFileMenu = false }) { Text("Salvar") }
-                }
-                DropdownButton("Edit", showEditMenu, onToggle = { showEditMenu = !showEditMenu }) {
-                    DropdownMenuItem(onClick = { showEditMenu = false }) { Text("Copiar") }
-                    DropdownMenuItem(onClick = { showEditMenu = false }) { Text("Colar") }
-                }
-                DropdownButton("View", showViewMenu, onToggle = { showViewMenu = !showViewMenu }) {
-                    DropdownMenuItem(onClick = { showViewMenu = false }) { Text("Mostrar HTML") }
-                    DropdownMenuItem(onClick = { showViewMenu = false }) { Text("Mostrar Markdown") }
+            // Sidebar
+            if (sidebarVisible.value) {
+                Column(
+                    modifier = Modifier
+                        .width(200.dp)
+                        .fillMaxHeight()
+                        .background(Color(0xFF1A1A1A))
+                ) {
+                    // Sidebar Top Menu + Collapse Icon
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Files", color = Color.Gray, fontSize = 13.sp)
+                            Text("Edit", color = Color.Gray, fontSize = 13.sp)
+                            Text("View", color = Color.Gray, fontSize = 13.sp)
+                        }
+                        Tooltip(text = "Toggle Sidebar") {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Toggle Sidebar",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(18.dp).clickable { sidebarVisible.value = !sidebarVisible.value }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    notes.forEach { note ->
+                        val isSelected = selectedNote.value == note
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(if (isSelected) Color(0xFF2A2A2A) else Color.Transparent)
+                                .clickable { selectedNote.value = note }
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = note,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (isSelected) {
+                                Tooltip(text = "Close Note") {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Close Note",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            // 🧩 Centro: toolbar de formatação (custom order)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // 2. List dropdown
-                var showListMenu by remember { mutableStateOf(false) }
-                Box {
-                    IconButton(onClick = { showListMenu = !showListMenu }) {
-                        Icon(Icons.Default.FormatListBulleted, contentDescription = "Lists")
+            // Main Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF1E1E1E))
+            ) {
+                // Toolbar + Settings (centered layout)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1A1A1A)) // Match sidebar
+                        .padding(vertical = 12.dp, horizontal = 16.dp)
+                ) {
+                    if (!sidebarVisible.value) {
+                        Tooltip(text = "Toggle Sidebar (Ctrl+B)") {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Toggle Sidebar",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(18.dp).clickable { sidebarVisible.value = !sidebarVisible.value }.align(Alignment.CenterStart)
+                            )
+                        }
                     }
-                    DropdownMenu(expanded = showListMenu, onDismissRequest = { showListMenu = false }) {
-                        DropdownMenuItem(onClick = {
-                            state.toggleUnorderedList()
-                            showListMenu = false
-                        }) { Text("Bullet List") }
-                        DropdownMenuItem(onClick = {
-                            state.toggleOrderedList()
-                            showListMenu = false
-                        }) { Text("Numbered List") }
+
+                    Row(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("H₁", color = Color.White, fontSize = 16.sp)
+                        Text("≡", color = Color.White, fontSize = 16.sp)
+                        Text("𝐛", color = Color.White, fontSize = 16.sp)
+                        Text("𝑖", color = Color.White, fontSize = 16.sp)
+                        Text("🖉", color = Color.White, fontSize = 16.sp)
+                    }
+
+                    Tooltip(text = "Settings") {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.Gray,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .size(20.dp)
+                        )
                     }
                 }
 
-                // 3. Bold
-                IconButton(onClick = { state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold)) }) {
-                    Icon(Icons.Default.FormatBold, contentDescription = "Bold")
-                }
-                // 4. Italic
-                IconButton(onClick = { state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic)) }) {
-                    Icon(Icons.Default.FormatItalic, contentDescription = "Italic")
-                }
-                // 5. Link
-                IconButton(onClick = { showLinkDialog = true }) {
-                    Icon(Icons.Default.Link, contentDescription = "Link")
-                }
-                // 6. Remove formatting
-                IconButton(onClick = {
-                    // Remove bold
-                    state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                    // Remove italic
-                    state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
-                    // Remove underline
-                    state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline))
-                    // Remove strikethrough
-                    state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
-                }) {
-                    Icon(Icons.Default.FormatClear, contentDescription = "Remove Formatting")
-                }
-            }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 40.dp, vertical = 24.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Tooltip(text = "Pin Note") {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Pinned",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Title",
+                            color = Color.White,
+                            fontSize = 28.sp, // Título maior
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
 
-            // 🧩 Direita: configurações
-            IconButton(onClick = { /* Configurações futuras */ }) {
-                Icon(Icons.Default.Settings, contentDescription = "Configurações")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Divider(color = Color.DarkGray, thickness = 1.dp)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Write something here...",
+                        color = Color(0xFF8B8B8B),
+                        fontSize = 16.sp
+                    )
+                }
             }
         }
-
-        // Editor
-        RichTextEditor(state = state, modifier = Modifier.fillMaxSize())
-    }
-
-    // Diálogos
-    if (showHtmlDialog) {
-        AlertDialog(
-            onDismissRequest = { showHtmlDialog = false },
-            title = { Text("HTML Content") },
-            text = { Text(state.toHtml()) },
-            confirmButton = { Button(onClick = { showHtmlDialog = false }) { Text("Fechar") } }
-        )
-    }
-    if (showMarkdownDialog) {
-        AlertDialog(
-            onDismissRequest = { showMarkdownDialog = false },
-            title = { Text("Markdown Content") },
-            text = { Text(state.toMarkdown()) },
-            confirmButton = { Button(onClick = { showMarkdownDialog = false }) { Text("Fechar") } }
-        )
-    }
-    if (showLinkDialog) {
-        var linkText by remember { mutableStateOf("") }
-        var linkUrl by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showLinkDialog = false },
-            title = { Text("Insert Link") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = linkText,
-                        onValueChange = { linkText = it },
-                        label = { Text("Link Text") }
-                    )
-                    OutlinedTextField(
-                        value = linkUrl,
-                        onValueChange = { linkUrl = it },
-                        label = { Text("URL") }
-                    )
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    if (linkText.isNotBlank() && linkUrl.isNotBlank()) {
-                        state.addLink(text = linkText, url = linkUrl)
-                    }
-                    showLinkDialog = false
-                }) { Text("Insert") }
-            },
-            dismissButton = {
-                Button(onClick = { showLinkDialog = false }) { Text("Cancel") }
-            }
-        )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DropdownButton(
-    label: String,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Box {
-        TextButton(onClick = onToggle) { Text(label) }
-        DropdownMenu(expanded = expanded, onDismissRequest = onToggle) {
-            content()
+fun Tooltip(text: String, content: @Composable () -> Unit) {
+    TooltipArea(tooltip = {
+        Surface(
+            modifier = Modifier.shadow(4.dp),
+            color = Color(0xFF252525),
+            shape = RoundedCornerShape(4.dp)
+        ) {
+            Text(
+                text = text,
+                modifier = Modifier.padding(10.dp),
+                color = Color.White
+            )
         }
+    }) {
+        content()
     }
 }
